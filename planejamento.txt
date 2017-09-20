@@ -1,0 +1,5 @@
+1 -2-> EZ, criar base quando fizer o download das notícias pra manter elas fixas
+3 -4 -> hoje a noite, comunicando, analisando paralelamente, pra definir os tokens (19/9)
+5-6 -> terminar amanhã (20/9)
+7 -> começar testando com poucas tokens na sexta, se der certo a gente deixa rodando a partir de sábado (21/9)
+8 -> segunda a gente faz o relatório pra terça (24/9)
