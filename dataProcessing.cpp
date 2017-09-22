@@ -4,9 +4,7 @@
 #include <vector>
 #include <chrono>
 
-using namespace std;
-
-double EuclideanDistanceSquared( vector<pair<string, int>> v1, vector<pair<string, int>> v2)
+double EuclideanDistanceSquared( std::vector<int> v1, std::vector<int> v2)
 {
 	if (v1.size() != v2.size())
 		return -1;
@@ -14,7 +12,7 @@ double EuclideanDistanceSquared( vector<pair<string, int>> v1, vector<pair<strin
 	double sum = 0;
 	for (int i = 0; i < v1.size(); i++)
 	{
-		sum += (v1[i].second - v2[i].second) * (v1[i].second - v2[i].second);
+		sum += (v1[i] - v2[i]) * (v1[i] - v2[i]);
 	}
 	return sum;
 }
@@ -25,50 +23,48 @@ int main (void)
 	// using clock = std::chrono::high_resolution_clock;
 	using clock = std::chrono::steady_clock;
 	int numDocs, sizeDocs;
-	vector<vector<pair<string, int>>> documents;
+	std::vector<std::string> tokens;
+	std::vector<std::vector<int>> documents;
+
 	// Loading Documents
 
-	ifstream dataset("dataset.csv");
+	std::ifstream dataset("dataset.csv");
 	if (!dataset.is_open())
-		cout << "Error trying to open" << endl;
+		std::cout << "Error trying to open" << std::endl;
 
-	string token, frequency;
+	std::string token, frequency;
 	int i = 0;
 	if (dataset.good())
 	{
-		string numDocsStr, sizeDocsStr;
+		std::string numDocsStr, sizeDocsStr;
 		getline(dataset, numDocsStr, ',');
 		numDocs = atoi(numDocsStr.c_str());
 		getline(dataset, sizeDocsStr, ';');
 		sizeDocs = atoi(sizeDocsStr.c_str());
 		dataset.ignore();
 
-		documents.resize(numDocs);
-		for (int i = 0; i < numDocs; i++)
-			documents[i].resize(sizeDocs);
+		documents.resize(sizeDocs);
+		for (int i = 0; i < sizeDocs; i++)
+			documents[i].resize(numDocs);
 
-		int doc = 0;
-		int row = 0;
-		while (dataset.good() && !dataset.eof())
+		for (int tokenNumber = 0; tokenNumber < sizeDocs && dataset.good() && !dataset.eof(); tokenNumber++)
 		{
 			getline(dataset, token, ',');
-			getline(dataset, frequency, ';');
-			dataset.ignore();
-
-			documents[doc][row].first = token;
-			documents[doc][row].second = atoi(frequency.c_str());
-			row++;
-			if (row == sizeDocs)
+			tokens.push_back(token);
+			for (int doc = 0; doc < numDocs - 1; doc++)
 			{
-				row = 0;
-				doc++;
+				getline(dataset, frequency, ',');
+				documents[tokenNumber][doc] = atoi(frequency.c_str());
 			}
+			getline(dataset, frequency, ';');
+			documents[tokenNumber][numDocs - 1] = atoi(frequency.c_str());
+			dataset.ignore();
 		}
 	}
 	
 	// Calculating and storing euclidean distances and tracking time
 
-	vector<vector<double>> distances (numDocs);
+	std::vector<std::vector<double>> distances (numDocs);
 	for (int i = 0; i < numDocs; i++)
 	{
 		distances[i].resize(i + 1);
@@ -85,20 +81,19 @@ int main (void)
 		}
 	}
 
-	chrono::duration<double> timeToCalculateDistance = clock::now() - start;
+	std::chrono::duration<double> timeToCalculateDistance = clock::now() - start;
 
-	cout << "Calculating the distance took " << timeToCalculateDistance.count() << " seconds" << endl;
+	std::cout << "Calculating the distance took " << timeToCalculateDistance.count() << " seconds" << std::endl;
 
 	// printing documents
 
-	for (int i = 0; i < numDocs; i++)
+	for (int j = 0; j < numDocs; j++)
 	{
-		cout << "Document " << i << " : " << endl;
-		for (int j = 0; j < sizeDocs; j++)
+		std::cout << "Document " << i << " :" << std::endl;
+		for (int i = 0; i < sizeDocs; i++)
 		{
-			cout << " " << documents[i][j].first << " " << documents[i][j].second << endl;
+			std::cout << " " << tokens[i] << " " << documents[i][j] << std::endl;
 		}
-		cout << endl;
 	}
 
 	return 0;
