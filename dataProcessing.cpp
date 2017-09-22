@@ -43,9 +43,9 @@ int main (void)
 		sizeDocs = atoi(sizeDocsStr.c_str());
 		dataset.ignore();
 
-		documents.resize(sizeDocs);
-		for (int i = 0; i < sizeDocs; i++)
-			documents[i].resize(numDocs);
+		documents.resize(numDocs);
+		for (int i = 0; i < numDocs; i++)
+			documents[i].resize(sizeDocs);
 
 		for (int tokenNumber = 0; tokenNumber < sizeDocs && dataset.good() && !dataset.eof(); tokenNumber++)
 		{
@@ -54,20 +54,21 @@ int main (void)
 			for (int doc = 0; doc < numDocs - 1; doc++)
 			{
 				getline(dataset, frequency, ',');
-				documents[tokenNumber][doc] = atoi(frequency.c_str());
+				documents[doc][tokenNumber] = atoi(frequency.c_str());
 			}
 			getline(dataset, frequency, ';');
-			documents[tokenNumber][numDocs - 1] = atoi(frequency.c_str());
+			documents[numDocs - 1][tokenNumber] = atoi(frequency.c_str());
 			dataset.ignore();
 		}
 	}
 	
 	// Calculating and storing euclidean distances and tracking time
+	// distances[bigger][smaller]
 
 	std::vector<std::vector<double>> distances (numDocs);
 	for (int i = 0; i < numDocs; i++)
 	{
-		distances[i].resize(i + 1);
+		distances[i].resize(i+1);
 	}
 
 	clock::time_point start = clock::now();
@@ -87,13 +88,14 @@ int main (void)
 
 	// printing documents
 
-	for (int j = 0; j < numDocs; j++)
+	for (int i = 0; i < numDocs; i++)
 	{
 		std::cout << "Document " << i << " :" << std::endl;
-		for (int i = 0; i < sizeDocs; i++)
+		for (int j = 0; j < sizeDocs; j++)
 		{
-			std::cout << " " << tokens[i] << " " << documents[i][j] << std::endl;
+			std::cout << " " << tokens[j] << " " << documents[i][j] << std::endl;
 		}
+		std::cout << std::endl;
 	}
 
 	return 0;
