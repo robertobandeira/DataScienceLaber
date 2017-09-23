@@ -7,23 +7,34 @@ Created on Tue Sep 19 12:20:20 2017
 
 import newspaper;
 import re;
-from nltk import stopwords
+from nltk.corpus import stopwords
 from collections import Counter
 import numpy as np
+import csv
 
 cnn = newspaper.build('http://cnn.com/', language = 'en', memoize_articles = False)
 cnn.size()
-#cnn.category_urls()
-
-#cnn.articles[5].text
 
 textos = []
 textosSujos = []
+urls = []
 stopwordsPattern = re.compile(r'\b(' + r'|'.join(stopwords.words('english')) + r')\b\s*')
 
+csvfile = open('urls.csv','r')
+leitor = csv.reader(csvfile)
+for row in leitor:
+    urls.append(row)    
+csvfile.close()
+csvfile = open('urls.csv','w')
+escritor = csv.writer(csvfile)
+
+
+## salvar links
+## ao fim salvar em csv
+
+
 k = 1
-#article = cnn.articles[19]
-#article = cnn.articles[26]
+## while len(urls) < 3000
 for article in cnn.articles[1:500]:
     article.download()
     article.html
@@ -31,7 +42,7 @@ for article in cnn.articles[1:500]:
         continue
     article.parse()
     textoSujo = article.text
-    if len(textoSujo == 0):
+    if len(textoSujo) == 0:
         continue
     textosSujos.append(textoSujo.split())
     
@@ -40,8 +51,11 @@ for article in cnn.articles[1:500]:
     texto = re.sub('\W+',' ', texto)
     texto = stopwordsPattern .sub('', texto)
     textos.append(texto.split())
-    print(k)
+    if article.url not in urls and len(urls) < 3000 and article.url != []:
+        urls.append(article.url)
+        escritor.writerow([article.url])
     k = k+1
+    
 
 frequency = Counter()
 for text in textos:
@@ -71,8 +85,8 @@ for j in range(numCols):
     freqInText = Counter()
     freqInText.update(textos[j])
     wordsInText = [item[0] for item in freqInText.items()]
-    print("Coluna", j, "de", numCols)
     for w in wordsInText:
         bagofwords[allWords.index(w), j] = freqInText[w]
 
 
+csvfile.close()
