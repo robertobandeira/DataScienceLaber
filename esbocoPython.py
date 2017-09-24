@@ -7,35 +7,26 @@ Created on Tue Sep 19 12:20:20 2017
 
 import newspaper;
 import re;
-from nltk.corpus import stopwords
+#nltk.download()
+from nltk.corpus import stopwords;
 from collections import Counter
 import numpy as np
-import csv
+import pandas as pd
 
 cnn = newspaper.build('http://cnn.com/', language = 'en', memoize_articles = False)
 cnn.size()
+#cnn.category_urls()
+
+#cnn.articles[5].text
 
 textos = []
 textosSujos = []
-urls = []
 stopwordsPattern = re.compile(r'\b(' + r'|'.join(stopwords.words('english')) + r')\b\s*')
 
-csvfile = open('urls.csv','r')
-leitor = csv.reader(csvfile)
-for row in leitor:
-    urls.append(row)    
-csvfile.close()
-csvfile = open('urls.csv','w')
-escritor = csv.writer(csvfile)
-
-
-## salvar links
-## ao fim salvar em csv
-
-
 k = 1
-## while len(urls) < 3000
-for article in cnn.articles[1:500]:
+#article = cnn.articles[19]
+#article = cnn.articles[26]
+for article in cnn.articles[1:30]:
     article.download()
     article.html
     if article.html == '':
@@ -44,6 +35,7 @@ for article in cnn.articles[1:500]:
     textoSujo = article.text
     if len(textoSujo) == 0:
         continue
+    
     textosSujos.append(textoSujo.split())
     
     texto = article.text
@@ -51,11 +43,8 @@ for article in cnn.articles[1:500]:
     texto = re.sub('\W+',' ', texto)
     texto = stopwordsPattern .sub('', texto)
     textos.append(texto.split())
-    if article.url not in urls and len(urls) < 3000 and article.url != []:
-        urls.append(article.url)
-        escritor.writerow([article.url])
+    print(k)
     k = k+1
-    
 
 frequency = Counter()
 for text in textos:
@@ -65,14 +54,12 @@ frequencySujos = Counter()
 for text in textosSujos:
     frequencySujos.update((text))
 
-
 frequency.most_common(10)
 frequencySujos.most_common(10)
 
 # Numero 2
 len(frequency)
 len(frequencySujos)
-
 
 # Construcao da Bag of Words
 bagofwords = np.zeros((len(frequency), len(textos)), dtype=np.int)
@@ -82,11 +69,15 @@ numCols = len(bagofwords[0])
 numRows = len(bagofwords)
 
 for j in range(numCols):
+    #if j == 0:
+    #    bagofwords[:,j] = allWords
     freqInText = Counter()
     freqInText.update(textos[j])
     wordsInText = [item[0] for item in freqInText.items()]
+    print("Coluna", j, "de", numCols)
     for w in wordsInText:
-        bagofwords[allWords.index(w), j] = freqInText[w]
+        bagofwords[allWords.index(w), j] = (freqInText[w])
 
+df = pd.DataFrame(bagofwords,index=allWords)
+df.to_csv("dataset.csv", sep = ",", header = False, line_terminator = ';\n')
 
-csvfile.close()
