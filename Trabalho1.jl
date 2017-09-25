@@ -81,8 +81,7 @@ pwd()
       end
       tic()
       tempoDistanciasAch = toc();
-
-      JLD.save(string(pwd(), "\\resultados_n_",n,"_worker_",i,".jld"),
+      JLD.save(string("resultados_n_",n,"_worker_",i,".jld"),
           "tempoCriacaoWGauss", tempoCriacaoWGauss,
           "tempoCriacaoWAch", tempoCriacaoWAch,
           "tempoMultiplicacaoGauss", tempoMultiplicacaoGauss,
