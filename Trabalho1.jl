@@ -80,7 +80,6 @@ pwd()
         end
         print(i)
       end
-      tic()
       tempoDistanciasAch = toc();
 
       normsGaussianSq = columnsNormSquared(M_gaussian)
