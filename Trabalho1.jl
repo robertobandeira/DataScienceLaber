@@ -10,9 +10,10 @@ addprocs()
 pwd()
 @everywhere cd("C:\\Users\\Thiago\\Desktop\\Mestrado\\Algoritmos para Data Science (Laber)\\Trab1")
 @everywhere include("auxiliaresTrab1.jl")
-@everywhere function main()
+@everywhere function main(start)
   #M = rand(UInt8, 3000, 40000)
   #cd("C:\\Users\\Thiago\\Desktop\\Mestrado\\Algoritmos para Data Science (Laber)\\Trab1")
+#  using DataFrames
   println("Vai comecar a ler o csv")
   Maux = readtable("dataset.csv");
   println("Acabou de ler o csv")
@@ -36,7 +37,7 @@ pwd()
   N = size(M)[2]
   n_values = [4, 16, 64, 256, 1024, 4096, 4^floor(log(4, N))]
   println("Vai entrar no loop paralelizado")
-  @parallel for i in 1:3
+  @parallel for ii in start:(start+2)
     println("Entrou no loop")
     for n in n_values[1:3]
       n = convert(Int64, n)
@@ -81,7 +82,14 @@ pwd()
       end
       tic()
       tempoDistanciasAch = toc();
-      JLD.save(string("resultados_n_",n,"_worker_",i,".jld"),
+
+      normsGaussianSq = columnsNormSquared(M_gaussian)
+      normsAchSq = columnsNormSquared(M_achiloptas)
+      normsMSq = columnsNormSquared(M)
+      razoesJLGaussian = abs(normsGaussianSq./normsMSq) - 1
+      razoesJLAch = abs(normsAchSq./normsMSq) - 1
+
+      JLD.save(string("resultados_n_",n,"_worker_",ii,".jld"),
           "tempoCriacaoWGauss", tempoCriacaoWGauss,
           "tempoCriacaoWAch", tempoCriacaoWAch,
           "tempoMultiplicacaoGauss", tempoMultiplicacaoGauss,
@@ -93,7 +101,12 @@ pwd()
           "M_gaussian", M_gaussian,
           "M_achiloptas", M_achiloptas,
           "distsGaussian", distsGaussian,
-          "distsAchiloptas", distsAchiloptas
+          "distsAchiloptas", distsAchiloptas,
+          "normsGaussianSq", normsGaussianSq,
+          "normsAchSq", normsAchSq,
+          "normsMSq", normsMSq,
+          "razoesJLGaussian", razoesJLGaussian,
+          "razoesJLAch", razoesJLAch
       )
     end
   end

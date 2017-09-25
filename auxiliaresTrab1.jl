@@ -71,3 +71,13 @@ end
   end
   return M
 end
+
+@everywhere function columnsNormSquared(mat)
+  A = zeros(Float64, size(mat, 2))
+  for j in 1:size(mat, 2)
+      for i in 1:size(mat, 1)
+          A[j] += mat[i, j]^2
+      end
+  end
+  return A
+end
