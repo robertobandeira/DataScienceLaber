@@ -5,6 +5,16 @@
 #include <chrono>
 #include <random>
 
+double ** createMatrix(int n, int m)
+{
+	double ** matrix = new double*[n];
+	for (int i = 0; i < n; i++)
+	{
+		matrix[i] = new double[m];
+	}
+	return matrix;
+}
+
 double EuclideanDistanceSquaredVectors( std::vector<int> v1, std::vector<int> v2)
 {
 	if (v1.size() != v2.size())
@@ -62,7 +72,7 @@ double ** randomGaussianMatrix(int numDocs, int dimension)
 	return matrix;
 }
 
-double ** gaussianProjection(std::vector<std::vector<int>> documents, double** Wgaussian, int numDocs, int dimension)
+double ** gaussianProjection(std::vector<std::vector<int>> documents, double** Wgaussian, int numDocs, int dimension, int n)
 {
 	int i, j, k;
 	double ** matrix = new double*[numDocs];
@@ -73,7 +83,7 @@ double ** gaussianProjection(std::vector<std::vector<int>> documents, double** W
 
 	for (int i = 0; i < numDocs; i++)
 	{
-		for (int j = 0; j < dimension; j++)
+		for (int j = 0; j < n; j++)
 		{
 			double soma = 0;
 			for (int k = 0; k < dimension; k++)
@@ -106,7 +116,7 @@ int ** randomAchiloptasMatrix(int numDocs, int dimension)
 	return matrix;
 }
 
-int ** achiloptasProjection(std::vector<std::vector<int>> documents, int** Wachiloptas, int numDocs, int dimension)
+int ** achiloptasProjection(std::vector<std::vector<int>> documents, int** Wachiloptas, int numDocs, int dimension, int n)
 {
 	int i, j, k;
 	int ** matrix = new int*[numDocs];
@@ -117,7 +127,7 @@ int ** achiloptasProjection(std::vector<std::vector<int>> documents, int** Wachi
 
 	for (int i = 0; i < numDocs; i++)
 	{
-		for (int j = 0; j < dimension; j++)
+		for (int j = 0; j < n; j++)
 		{
 			double soma = 0;
 			for (int k = 0; k < dimension; k++)
@@ -139,19 +149,6 @@ int main (void)
 	std::vector<std::string> tokens;
 	std::vector<std::vector<int>> documents;
 
-	// testing achloptas matrix
-	int ** test = randomAchiloptasMatrix(20, 20);
-
-	for (int i = 0; i < 20; i++)
-	{
-		for (int j = 0; j < 20; j++)
-		{
-			std::cout << test[i][j] << " ";
-		}
-		std::cout << std::endl;
-	}
-	return 0 ;
-
 	// Loading Documents
 
 	std::ifstream dataset("dataset.csv");
@@ -159,21 +156,24 @@ int main (void)
 		std::cout << "Error trying to open" << std::endl;
 
 	std::string token, frequency;
+	std::cout << "Starting reading dataset" << std::endl;
 	int i = 0;
 	if (dataset.good())
 	{
-		std::string numDocsStr, sizeDocsStr;
+		/*std::string numDocsStr, sizeDocsStr;
 		getline(dataset, numDocsStr, ',');
 		numDocs = atoi(numDocsStr.c_str());
 		getline(dataset, sizeDocsStr, ';');
 		sizeDocs = atoi(sizeDocsStr.c_str());
-		dataset.ignore();
-
+		dataset.ignore();*/
+		numDocs = 2771;
+		sizeDocs = 48451;
 		documents.resize(numDocs);
 		for (int i = 0; i < numDocs; i++)
 			documents[i].resize(sizeDocs);
 
-		for (int tokenNumber = 0; tokenNumber < sizeDocs && dataset.good() && !dataset.eof(); tokenNumber++)
+		int tokenNumber = 0;
+		for (tokenNumber = 0; tokenNumber < sizeDocs && dataset.good() && !dataset.eof(); tokenNumber++)
 		{
 			getline(dataset, token, ',');
 			tokens.push_back(token);
@@ -185,11 +185,19 @@ int main (void)
 			getline(dataset, frequency, ';');
 			documents[numDocs - 1][tokenNumber] = atoi(frequency.c_str());
 			dataset.ignore();
+
+			std::cout << tokenNumber << " out of " << sizeDocs << " read" << std::endl;
 		}
+		bool good = dataset.good();
+		bool eof = dataset.eof();
+		sizeDocs = tokenNumber;
 	}
+	std::cout << "Finished reading dataset" << std::endl;
 	
 	// Calculating and storing euclidean distances and tracking time
 	// distances[bigger][smaller]
+
+	std::cout << "Calculating distance" << std::endl;
 
 	std::vector<std::vector<double>> distances (numDocs);
 	for (int i = 0; i < numDocs; i++)
@@ -214,33 +222,85 @@ int main (void)
 
 	// printing documents
 
-	for (int i = 0; i < numDocs; i++)
-	{
-		std::cout << "Document " << i << " :" << std::endl;
-		for (int j = 0; j < sizeDocs; j++)
-		{
-			std::cout << " " << tokens[j] << " " << documents[i][j] << std::endl;
-		}
-		std::cout << std::endl;
-	}
+	//for (int i = 0; i < numDocs; i++)
+	//{
+	//	std::cout << "Document " << i << " :" << std::endl;
+	//	for (int j = 0; j < sizeDocs; j++)
+	//	{
+	//		std::cout << " " << tokens[j] << " " << documents[i][j] << std::endl;
+	//	}
+	//	std::cout << std::endl;
+	//}
 
 	// main loop
 
-	start = clock::now();
-	int ** Wachiloptas = randomAchiloptasMatrix(numDocs, sizeDocs);
-	std::chrono::duration<double> timeToCalculateAchiloptasMatrix = clock::now() - start;
+	std::cout << "Entering main loop" << std::endl;
+	std::chrono::duration<double> timeToCalculateAchiloptasMatrix = std::chrono::steady_clock::duration::zero();
+	std::chrono::duration<double> timeToCalculateGaussianMatrix = std::chrono::steady_clock::duration::zero();
+	std::chrono::duration<double> projectionTimeAchiloptas = std::chrono::steady_clock::duration::zero();
+	std::chrono::duration<double> projectionTimeGaussian = std::chrono::steady_clock::duration::zero();
+	std::chrono::duration<double> timeToCalculateDistanceGaussian = std::chrono::steady_clock::duration::zero();
+	std::chrono::duration<double> timeToCalculateDistanceAchiloptas = std::chrono::steady_clock::duration::zero();
 
-	start = clock::now();
-	double ** Wgaussian = randomGaussianMatrix(numDocs, sizeDocs);
-	std::chrono::duration<double> timeToCalculateGaussianMatrix = clock::now() - start;
+	int n = 16;
+	for (int i = 0; i < 30; i++)
+	{
+		std::cout << "Step number " << i << std::endl;
+		start = clock::now();
+		int ** Wachiloptas = randomAchiloptasMatrix(numDocs, sizeDocs);
+		timeToCalculateAchiloptasMatrix += clock::now() - start;
 
-	start = clock::now();
-	int ** projectedAchiloptas = achiloptasProjection(documents, Wachiloptas, numDocs, sizeDocs);
-	std::chrono::duration<double> projectionTimeGaussian = clock::now() - start;
+		start = clock::now();
+		double ** Wgaussian = randomGaussianMatrix(numDocs, sizeDocs);
+		timeToCalculateGaussianMatrix += clock::now() - start;
 
-	start = clock::now();
-	double ** projectedGaussian = gaussianProjection(documents, Wgaussian, numDocs, sizeDocs);
-	std::chrono::duration<double> projectionTimeGaussian = clock::now() - start;
+		start = clock::now();
+		int ** projectedAchiloptas = achiloptasProjection(documents, Wachiloptas, numDocs, sizeDocs, n);
+		projectionTimeAchiloptas += clock::now() - start;
+
+		start = clock::now();
+		double ** projectedGaussian = gaussianProjection(documents, Wgaussian, numDocs, sizeDocs, n);
+		projectionTimeGaussian = clock::now() - start;
+
+
+		start = clock::now();
+		double ** gaussianDistances = createMatrix(numDocs, n);
+		for (int i = 0; i < numDocs; i++)
+		{
+			gaussianDistances[i][i] = 0.0;
+			for (int j = i + 1; j < n; j++)
+			{
+				gaussianDistances[i][j] = EuclideanDistanceSquaredDouble(projectedGaussian[i], projectedGaussian[j], n);
+			}
+		}
+		timeToCalculateDistanceGaussian += clock::now() - start;
+
+		start = clock::now();
+		double ** achiloptasDistances = createMatrix(numDocs, n);
+		for (int i = 0; i < numDocs; i++)
+		{
+			achiloptasDistances[i][i] = 0.0;
+			for (int j = i + 1; j < n; j++)
+			{
+				achiloptasDistances[i][j] = EuclideanDistanceSquaredInt(projectedAchiloptas[i], projectedAchiloptas[j], n);
+			}
+		}
+		timeToCalculateDistanceAchiloptas += clock::now() - start;
+	}
+
+	std::cout << "Times of Gaussian " << std::endl;
+
+	std::cout << "Time to calculate Gaussian Matrix      " << timeToCalculateGaussianMatrix.count() / 30.0 << " seconds" << std::endl;
+	std::cout << "Time to project matrix with Gaussian   " << projectionTimeGaussian.count() / 30.0 << " seconds" << std::endl;
+	std::cout << "Time to calculate distance Gaussian    " << timeToCalculateDistanceGaussian.count() / 30.0 << " seconds" << std::endl;
+
+	std::cout << std::endl;
+
+	std::cout << "Times of Achiloptas" << std::endl;
+	std::cout << "Time to calculate Achiloptas Matrix    " << timeToCalculateAchiloptasMatrix.count() / 30.0 << " seconds" << std::endl;
+	std::cout << "Time to project matrix with Achiloptas " << projectionTimeAchiloptas.count() / 30.0 << " seconds" << std::endl;
+	std::cout << "Time to calculate distance Achiloptas  " << timeToCalculateDistanceAchiloptas.count() / 30.0 << " seconds" << std::endl;
+
 
 	return 0;
 }
